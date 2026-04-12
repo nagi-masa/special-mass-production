@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import os
 import streamlit as st
 from datetime import datetime
 
@@ -57,10 +58,45 @@ def init_state():
 
 init_state()
 
-# ── サイドバー: ステップ表示 ──────────────────────────────
+# ── サイドバー: APIキー設定 & ステップ表示 ──────────────
 with st.sidebar:
     st.title("📄 特典量産システム")
     st.markdown("---")
+
+    # ── APIキー設定 ──────────────────────────────────────
+    st.subheader("🔑 APIキー設定")
+    provider = st.selectbox(
+        "AIプロバイダー",
+        ["gemini", "anthropic", "openai"],
+        index=0,
+        help="使用するAIプロバイダーを選択してください",
+    )
+    api_key_input = st.text_input(
+        "APIキー",
+        type="password",
+        placeholder="APIキーを入力してください",
+        help=(
+            "Gemini: https://aistudio.google.com/apikey\n"
+            "Anthropic: https://console.anthropic.com/\n"
+            "OpenAI: https://platform.openai.com/"
+        ),
+    )
+
+    # セッション中にAPIキーをos.environに反映（動的読み込みに対応）
+    if api_key_input:
+        key_map = {
+            "gemini": "GEMINI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openai": "OPENAI_API_KEY",
+        }
+        os.environ[key_map[provider]] = api_key_input
+        os.environ["PROVIDER"] = provider
+        st.success("APIキーを設定しました")
+    elif not any(os.getenv(k) for k in ["GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"]):
+        st.warning("APIキーを入力してください")
+
+    st.markdown("---")
+    st.subheader("進捗")
     for i, name in enumerate(STEPS):
         icon = "✅" if i < st.session_state.step else ("▶️" if i == st.session_state.step else "○")
         st.markdown(f"{icon} **ステップ{i+1}**: {name}")
@@ -115,6 +151,12 @@ def step_input():
             return
         if not author_name:
             st.error("著者名 / 社名は必須です")
+            return
+        # APIキーチェック
+        key_map = {"gemini": "GEMINI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
+        active_provider = os.getenv("PROVIDER", "gemini")
+        if not os.getenv(key_map.get(active_provider, "GEMINI_API_KEY")):
+            st.error("サイドバーにAPIキーを入力してから分析を開始してください")
             return
         materials = [m for m in [mat1, mat2, mat3] if m.strip()]
         # コピーライトが空の場合はデフォルト生成
