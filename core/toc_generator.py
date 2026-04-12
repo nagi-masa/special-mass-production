@@ -1,6 +1,6 @@
 """目次生成モジュール"""
-import json
 from core.claude_client import call_claude
+from core.json_utils import extract_json
 from config import PROMPTS_DIR, MIN_SECTIONS, STORY_STRUCTURE
 
 
@@ -55,14 +55,7 @@ def generate_toc(
 """
     raw = call_claude(system_prompt, user_prompt, max_tokens=3000)
 
-    try:
-        start = raw.index("{")
-        end = raw.rindex("}") + 1
-        result = json.loads(raw[start:end])
-    except (ValueError, json.JSONDecodeError):
-        result = {"sections": [], "flow_check": "解析失敗", "raw": raw}
-
-    return result
+    return extract_json(raw, {"sections": [], "flow_check": "解析失敗"})
 
 
 def check_toc_validity(toc: dict) -> list[str]:

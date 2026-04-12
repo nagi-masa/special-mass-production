@@ -15,6 +15,7 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
 
 from core.claude_client import call_claude
+from core.json_utils import extract_json
 from config import PROMPTS_DIR
 
 # ── カラーパレット ──────────────────────────────────────
@@ -95,13 +96,8 @@ def generate_visual_specs(section: dict, section_text: str, candidate: dict, tar
     for attempt in range(2):
         raw = call_claude(system_prompt, _build_prompt(retry=(attempt > 0)), max_tokens=3000)
 
-        try:
-            start = raw.index("{")
-            end = raw.rindex("}") + 1
-            result = json.loads(raw[start:end])
-            visuals = result.get("visuals", [])
-        except (ValueError, json.JSONDecodeError):
-            visuals = []
+        result = extract_json(raw, {"visuals": []})
+        visuals = result.get("visuals", [])
 
         if len(visuals) >= MIN_VISUALS_PER_SECTION:
             return visuals

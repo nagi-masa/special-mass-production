@@ -1,6 +1,6 @@
 """特典候補生成モジュール"""
-import json
 from core.claude_client import call_claude
+from core.json_utils import extract_json
 from config import PROMPTS_DIR
 
 
@@ -51,11 +51,4 @@ def generate_candidates(
 """
     raw = call_claude(system_prompt, user_prompt, max_tokens=4000)
 
-    try:
-        start = raw.index("{")
-        end = raw.rindex("}") + 1
-        result = json.loads(raw[start:end])
-    except (ValueError, json.JSONDecodeError):
-        result = {"can_multiply": False, "reason": "解析失敗", "candidates": [], "raw": raw}
-
-    return result
+    return extract_json(raw, {"can_multiply": False, "reason": "解析失敗", "candidates": []})

@@ -1,7 +1,7 @@
 """素材分析モジュール：テーマ・悩み・理想・解決策を抽出する"""
-import json
 from pathlib import Path
 from core.claude_client import call_claude
+from core.json_utils import extract_json
 from config import PROMPTS_DIR
 
 
@@ -49,22 +49,10 @@ def analyze_materials(
 """
     raw = call_claude(system_prompt, user_prompt, max_tokens=3000)
 
-    # JSON部分だけ抽出
-    try:
-        start = raw.index("{")
-        end = raw.rindex("}") + 1
-        result = json.loads(raw[start:end])
-    except (ValueError, json.JSONDecodeError):
-        # JSONが取れなかった場合はフォールバック
-        result = {
-            "themes": [],
-            "pain_points": [],
-            "ideal_outcomes": [],
-            "causes": [],
-            "solutions": [],
-            "teaser_elements": [],
-            "raw_summary": raw,
-        }
-
+    fallback = {
+        "themes": [], "pain_points": [], "ideal_outcomes": [],
+        "causes": [], "solutions": [], "teaser_elements": [],
+    }
+    result = extract_json(raw, fallback)
     result["raw_summary"] = raw
     return result

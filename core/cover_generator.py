@@ -1,6 +1,6 @@
 """表紙関連生成モジュール"""
-import json
 from core.claude_client import call_claude
+from core.json_utils import extract_json
 from config import PROMPTS_DIR
 
 
@@ -51,12 +51,7 @@ def generate_cover_assets(candidate: dict, target: str) -> dict:
 """
     raw = call_claude(system_prompt, user_prompt, max_tokens=1000)
 
-    try:
-        start = raw.index("{")
-        end = raw.rindex("}") + 1
-        design = json.loads(raw[start:end])
-    except (ValueError, json.JSONDecodeError):
-        design = {"design_concept": raw, "color_scheme": "", "image_prompt": ""}
+    design = extract_json(raw, {"design_concept": raw, "color_scheme": "", "subject": "", "image_prompt": ""})
 
     # タイトル・サブタイトル・バッジはcandidateから流用（AI再生成不要）
     result = {
