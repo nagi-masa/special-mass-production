@@ -1,0 +1,32 @@
+# APIキー（絶対にGitHubに上げない）
+.env
+.env.local
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 生成された出力ファイル（Word・PNG・JSON）
+output/
+data/projects/*.json
+
+# データフォルダ（構造だけ保持）
+!data/projects/.gitkeep
+!output/.gitkeep
+
+# Windows
+desktop.ini
+Thumbs.db
+
+# Mac
+.DS_Store
+
+# バッチファイル（ローカル専用）
+*.bat
+
+# IDEの設定
+.vscode/
+.idea/
