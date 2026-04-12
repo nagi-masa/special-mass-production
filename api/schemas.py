@@ -31,4 +31,7 @@ class GenerateReportInput(BaseModel):
     analysis: dict
     target: str
     project_id: str
+    author_name: str = ""
+    copyright_text: str = ""
+    author_profile: str = ""
     generate_visuals: bool = True

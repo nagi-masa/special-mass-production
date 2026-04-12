@@ -1,5 +1,4 @@
 """本文生成モジュール：セクション単位で生成・重複チェックつき・自動再生成対応"""
-import json
 from core.claude_client import call_claude
 from core.quality_checker import check_text_truncation
 from config import PROMPTS_DIR, MIN_SECTION_CHARS

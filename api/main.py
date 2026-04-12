@@ -28,6 +28,7 @@ from core.content_generator import (
     generate_intro,
     generate_section,
     generate_conclusion,
+    generate_profile_page,
     generate_terms,
 )
 from core.cover_generator import generate_cover_assets
@@ -128,7 +129,17 @@ async def generate(body: GenerateReportInput):
 
     conclusion = await asyncio.to_thread(generate_conclusion, candidate, target, generated_texts)
     cover_assets = await asyncio.to_thread(generate_cover_assets, candidate, target)
-    terms = generate_terms()
+    terms = generate_terms(
+        author_name=body.author_name,
+        report_title=candidate.get("title", ""),
+    )
+
+    # 著者プロフィール（入力がある場合のみリライト）
+    profile_page = ""
+    if body.author_profile:
+        profile_page = await asyncio.to_thread(
+            generate_profile_page, candidate, body.author_profile, target
+        )
 
     # 品質チェック
     issues = run_all_checks({**candidate, **cover_assets}, sections_data)
@@ -139,7 +150,10 @@ async def generate(body: GenerateReportInput):
         export_report,
         word_path, candidate, cover_assets,
         greeting, intro, sections_data, conclusion, terms,
-        section_visuals if body.generate_visuals else None
+        section_visuals if body.generate_visuals else None,
+        body.author_name,
+        body.copyright_text,
+        profile_page,
     )
 
     result = {

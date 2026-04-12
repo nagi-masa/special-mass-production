@@ -4,7 +4,6 @@
 - matplotlibで図解PNGをレンダリング（日本語テキスト入り）
 - AIプロンプトも合わせて出力
 """
-import json
 import platform
 from pathlib import Path
 
