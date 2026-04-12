@@ -65,6 +65,24 @@ def _longest_common_substring(s1: str, s2: str) -> str:
     return longest
 
 
+def check_text_truncation(text: str, section_title: str) -> list[str]:
+    """
+    文章が途中で切れていないかチェック。
+    文末が句点・感嘆符・疑問符・閉じカッコ類で終わっていない場合は警告。
+    """
+    issues = []
+    stripped = (text or "").rstrip()
+    if not stripped:
+        return issues
+    valid_endings = ('。', '！', '？', '」', '』', '…', '☆', '★', '♪', '\n')
+    if not stripped.endswith(valid_endings):
+        tail = stripped[-30:].replace('\n', '↵')
+        issues.append(
+            f"【{section_title}】文章が途中で切れている可能性があります（末尾: 「...{tail}」）"
+        )
+    return issues
+
+
 def run_all_checks(candidate: dict, sections: list[dict]) -> list[str]:
     """全チェックをまとめて実行してissueリストを返す"""
     issues = []
@@ -72,5 +90,6 @@ def run_all_checks(candidate: dict, sections: list[dict]) -> list[str]:
     issues += check_subtitle_length(candidate.get("subtitle", ""))
     for s in sections:
         issues += check_section_length(s.get("text", ""), s.get("title", ""))
+        issues += check_text_truncation(s.get("text", ""), s.get("title", ""))
     issues += check_duplication(sections)
     return issues

@@ -1,6 +1,7 @@
 """本文生成モジュール：セクション単位で生成・重複チェックつき・自動再生成対応"""
 import json
 from core.claude_client import call_claude
+from core.quality_checker import check_text_truncation
 from config import PROMPTS_DIR, MIN_SECTION_CHARS
 
 MAX_RETRIES = 2  # 文字数不足時の最大再試行回数
@@ -55,9 +56,9 @@ def _build_section_prompt(
     retry_note = ""
     if attempt > 0:
         retry_note = f"""
-【重要】前回の生成で文字数が不足していました（試行{attempt}回目）。
-今回は必ず2500文字以上で書いてください。
-具体的なエピソード・会話・体験談・事例をさらに詳しく書き込んでください。
+【重要・再生成{attempt}回目】前回の生成に問題がありました（文字数不足または文章が途中で切れていた）。
+今回は必ず2500文字以上で書き、必ず「。」で終わる完結した文章にしてください。
+文章を途中で絶対に切らないこと。具体的なエピソード・会話・体験談・事例をさらに詳しく書き込んでください。
 """
 
     return f"""
@@ -96,13 +97,14 @@ def generate_section(
         user_prompt = _build_section_prompt(section, candidate, target, previous_sections, attempt)
         text = call_claude(system_prompt, user_prompt, max_tokens=5000)
 
-        if len(text) >= MIN_SECTION_CHARS:
+        is_truncated = bool(check_text_truncation(text, section.get("title", "")))
+        if len(text) >= MIN_SECTION_CHARS and not is_truncated:
             return text
 
         if attempt < MAX_RETRIES:
             if on_retry:
                 on_retry(attempt + 1, len(text))
-        # 最終試行まで短くても最後の結果を返す
+        # 最終試行まで問題があっても最後の結果を返す
 
     return text
 

@@ -139,21 +139,55 @@ def export_report(
 
     doc.add_paragraph()
 
-    # デザインメモ（小さく・グレー）
-    design = cover_assets.get("design_concept", "")
-    if design:
-        note = doc.add_paragraph(f"＜表紙デザインメモ＞\n{design}")
-        if note.runs:
-            note.runs[0].font.size = Pt(8)
-            note.runs[0].font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+    # ---- 表紙デザイン指示書（構造化） ----
+    design_lines = ["＜表紙デザイン指示書＞", ""]
 
-    # 表紙画像AIプロンプト
+    design_lines.append("タイトル:")
+    design_lines.append(f"- {title_text}")
+    design_lines.append("")
+
+    if subtitle_text:
+        design_lines.append("サブタイトル:")
+        design_lines.append(f"- {subtitle_text}")
+        design_lines.append("")
+
+    if badges:
+        design_lines.append("バッジ:")
+        for b in badges:
+            design_lines.append(f"- 【{b}】")
+        design_lines.append("")
+
+    design_lines.append("デザイン:")
+    color_scheme = cover_assets.get("color_scheme", "")
+    if color_scheme:
+        design_lines.append(f"- カラー：{color_scheme}")
+    subject = cover_assets.get("subject", "")
+    if subject:
+        design_lines.append(f"- 被写体：{subject}")
+    design_lines.append("- サイズ：A4縦")
+    design_lines.append("")
+
+    design_lines.append("表紙文字サイズと比率:")
+    design_lines.append("- 1. メインタイトル：最大サイズ（60-80pt相当）。紙面の3分の1を占める程度のインパクト。中央または上部に配置。")
+    design_lines.append("- 2. サブキャッチコピー：中サイズ（30-40pt相当）。タイトルの補足として、メインの半分程度の大きさで配置。")
+    design_lines.append("- 3. 著者名・補足情報：最小サイズ（18-24pt相当）。可読性を保ちつつ、四隅や下部に控えめに配置。")
+    design_lines.append("")
+
+    design_concept = cover_assets.get("design_concept", "")
+    if design_concept:
+        design_lines.append("デザインコンセプト:")
+        design_lines.append(design_concept)
+        design_lines.append("")
+
     image_prompt = cover_assets.get("image_prompt", "")
     if image_prompt:
-        note2 = doc.add_paragraph(f"＜表紙画像生成プロンプト（Midjourney / DALL-E / Firefly 等に貼り付けてご使用ください）＞\n{image_prompt}")
-        if note2.runs:
-            note2.runs[0].font.size = Pt(8)
-            note2.runs[0].font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+        design_lines.append("表紙画像生成プロンプト（Midjourney / DALL-E / Firefly 等に貼り付けてご使用ください）:")
+        design_lines.append(image_prompt)
+
+    note = doc.add_paragraph("\n".join(design_lines))
+    if note.runs:
+        note.runs[0].font.size = Pt(8)
+        note.runs[0].font.color.rgb = RGBColor(0x99, 0x99, 0x99)
 
     doc.add_page_break()
 

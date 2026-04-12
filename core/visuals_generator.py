@@ -66,31 +66,51 @@ def load_prompt(name: str) -> str:
     return (PROMPTS_DIR / name).read_text(encoding="utf-8")
 
 
+MIN_VISUALS_PER_SECTION = 2  # 1章あたりの最低図解枚数
+
+
 def generate_visual_specs(section: dict, section_text: str, candidate: dict, target: str) -> list[dict]:
     """
     1章のテキストからビジュアル仕様リストを生成する。
     返り値: [{"type": ..., "title": ..., "content": {...}, ...}, ...]
+    文字数不足・最低枚数未達の場合は再生成を1回行う。
     """
     system_prompt = load_prompt("generate_visuals.md")
-    user_prompt = f"""
+
+    def _build_prompt(retry: bool = False) -> str:
+        retry_note = ""
+        if retry:
+            retry_note = f"\n【重要】前回の生成で図解が{MIN_VISUALS_PER_SECTION}枚未満でした。必ず{MIN_VISUALS_PER_SECTION}枚以上の図解・イメージ画像を設計してください。\n"
+        return f"""
 # 章番号: 第{section["number"]}章
 # 章タイトル: {section["title"]}
 # ストーリー上の役割: {section.get("role", "")}
 # ターゲット: {target}
 # 特典タイトル: {candidate["title"]}
-
-# 章のテキスト（冒頭600文字）:
-{section_text[:600]}
+{retry_note}
+# 章のテキスト（全文）:
+{section_text}
 """
-    raw = call_claude(system_prompt, user_prompt, max_tokens=2000)
 
-    try:
-        start = raw.index("{")
-        end = raw.rindex("}") + 1
-        result = json.loads(raw[start:end])
-        return result.get("visuals", [])
-    except (ValueError, json.JSONDecodeError):
-        return []
+    for attempt in range(2):
+        raw = call_claude(system_prompt, _build_prompt(retry=(attempt > 0)), max_tokens=3000)
+
+        try:
+            start = raw.index("{")
+            end = raw.rindex("}") + 1
+            result = json.loads(raw[start:end])
+            visuals = result.get("visuals", [])
+        except (ValueError, json.JSONDecodeError):
+            visuals = []
+
+        if len(visuals) >= MIN_VISUALS_PER_SECTION:
+            return visuals
+
+        # 枚数不足 → 1回だけ再生成
+        if attempt == 0:
+            print(f"[visuals] 第{section['number']}章: 図解{len(visuals)}枚（最低{MIN_VISUALS_PER_SECTION}枚必要）→ 再生成")
+
+    return visuals
 
 
 # ── matplotlib レンダリング ───────────────────────────────

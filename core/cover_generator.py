@@ -64,6 +64,7 @@ def generate_cover_assets(candidate: dict, target: str) -> dict:
         "subtitle":       candidate.get("subtitle", ""),
         "badges":         candidate.get("badges", []),
         "color_scheme":   design.get("color_scheme", ""),
+        "subject":        design.get("subject", ""),
         "design_concept": design.get("design_concept", ""),
         "image_prompt":   design.get("image_prompt", ""),
     }
