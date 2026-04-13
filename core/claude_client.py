@@ -1,6 +1,6 @@
 """AI クライアント共通モジュール（Anthropic / OpenAI / Gemini 対応）"""
 import os
-from config import PROVIDER, CLAUDE_MODEL, OPENAI_MODEL, GEMINI_MODEL
+from config import PROVIDER, CLAUDE_MODEL, OPENAI_MODEL, GEMINI_MODEL, GEMINI_JSON_MODEL
 
 
 def _get_api_key(env_key: str) -> str:
@@ -36,10 +36,15 @@ def call_claude(
     elif PROVIDER == "openai":
         return _call_openai(system_prompt, user_prompt, max_tokens, json_mode=json_mode)
     elif PROVIDER == "gemini":
+        # json_mode の呼び出しは thinking を持たない GEMINI_JSON_MODEL を使う。
+        # Gemini 2.5 Flash はデフォルトの動的 thinking が max_output_tokens のほぼ全量を消費し、
+        # JSON が常に途中で切れてしまうことが確認されている。
+        gemini_model = GEMINI_JSON_MODEL if json_mode else GEMINI_MODEL
         return _call_gemini(
             system_prompt, user_prompt, max_tokens,
             json_mode=json_mode,
             disable_thinking=disable_thinking or json_mode,
+            model=gemini_model,
         )
     else:
         raise ValueError(f"未対応のプロバイダー: {PROVIDER}（anthropic / openai / gemini から選択）")
@@ -113,10 +118,12 @@ def _call_gemini(
     max_tokens: int,
     json_mode: bool = False,
     disable_thinking: bool = False,
+    model: str = None,
 ) -> str:
     api_key = _get_api_key("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY が設定されていません")
+    model = model or GEMINI_MODEL
     try:
         # 新しいSDK (google-genai) を優先して使う
         from google import genai
@@ -130,14 +137,11 @@ def _call_gemini(
         if json_mode:
             config_kwargs["response_mime_type"] = "application/json"
 
-        # Gemini 2.5 Flash はデフォルトで thinking トークンを消費し、
-        # max_output_tokens の枠を圧迫する。json_mode または長文生成では
-        # thinking を無効化して出力トークンを最大確保する。
         if disable_thinking or json_mode:
             _set_thinking_budget_zero(config_kwargs, types)
 
         response = client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=model,
             contents=user_prompt,
             config=types.GenerateContentConfig(**config_kwargs),
         )
@@ -146,14 +150,14 @@ def _call_gemini(
         # 旧SDK (google-generativeai) にフォールバック
         import google.generativeai as genai_old
         genai_old.configure(api_key=api_key)
-        model = genai_old.GenerativeModel(
-            model_name=GEMINI_MODEL,
+        old_model = genai_old.GenerativeModel(
+            model_name=model,
             system_instruction=system_prompt,
         )
         gen_config: dict = {"max_output_tokens": max_tokens}
         if json_mode:
             gen_config["response_mime_type"] = "application/json"
-        response = model.generate_content(
+        response = old_model.generate_content(
             user_prompt,
             generation_config=gen_config,
         )

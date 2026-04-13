@@ -48,7 +48,10 @@ OPENAI_MODEL = _get("OPENAI_MODEL", "gpt-4o")
 
 # Google (Gemini) ← 無料枠あり・デフォルト
 GEMINI_API_KEY = _get("GEMINI_API_KEY", "")
-GEMINI_MODEL = _get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL      = _get("GEMINI_MODEL",      "gemini-2.5-flash")
+# JSON 専用モデル: 2.5-flash はデフォルトで thinking を大量消費し JSON が途切れる。
+# thinking を持たない 2.0-flash を使うことで確実に JSON を完全出力させる。
+GEMINI_JSON_MODEL = _get("GEMINI_JSON_MODEL", "gemini-2.0-flash")
 
 # ---- 品質基準 ----
 MIN_SECTION_CHARS = 2500
