@@ -17,19 +17,30 @@ def _get_api_key(env_key: str) -> str:
         return ""
 
 
-def call_claude(system_prompt: str, user_prompt: str, max_tokens: int = 4096, json_mode: bool = False) -> str:
+def call_claude(
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int = 4096,
+    json_mode: bool = False,
+    disable_thinking: bool = False,
+) -> str:
     """プロバイダーに応じてAI APIを呼び出す共通関数
 
-    json_mode=True: JSONを返すことが確実な呼び出しに使用。
-    Gemini では response_mime_type="application/json" + thinking無効化で
-    出力トークンを最大確保する。
+    json_mode=True       : JSONを返す呼び出し。Gemini では response_mime_type="application/json"
+                           + thinking無効化で出力トークンを最大確保する。
+    disable_thinking=True: 長文生成など、thinking不要な呼び出しで出力トークンを最大確保する。
+                           json_mode=True のときも自動的にdisable_thinking扱いになる。
     """
     if PROVIDER == "anthropic":
         return _call_anthropic(system_prompt, user_prompt, max_tokens)
     elif PROVIDER == "openai":
         return _call_openai(system_prompt, user_prompt, max_tokens, json_mode=json_mode)
     elif PROVIDER == "gemini":
-        return _call_gemini(system_prompt, user_prompt, max_tokens, json_mode=json_mode)
+        return _call_gemini(
+            system_prompt, user_prompt, max_tokens,
+            json_mode=json_mode,
+            disable_thinking=disable_thinking or json_mode,
+        )
     else:
         raise ValueError(f"未対応のプロバイダー: {PROVIDER}（anthropic / openai / gemini から選択）")
 
@@ -72,7 +83,13 @@ def _call_openai(system_prompt: str, user_prompt: str, max_tokens: int, json_mod
 
 
 # ── Google Gemini ─────────────────────────────────────────
-def _call_gemini(system_prompt: str, user_prompt: str, max_tokens: int, json_mode: bool = False) -> str:
+def _call_gemini(
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int,
+    json_mode: bool = False,
+    disable_thinking: bool = False,
+) -> str:
     api_key = _get_api_key("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY が設定されていません")
@@ -88,8 +105,11 @@ def _call_gemini(system_prompt: str, user_prompt: str, max_tokens: int, json_mod
         )
         if json_mode:
             config_kwargs["response_mime_type"] = "application/json"
-            # Gemini 2.5 Flash はデフォルトで thinking トークンを消費する。
-            # JSON専用呼び出しでは thinking を無効化して出力トークンを最大確保する。
+
+        # Gemini 2.5 Flash はデフォルトで thinking トークンを消費し、
+        # max_output_tokens の枠を圧迫する。json_mode または長文生成では
+        # thinking を無効化して出力トークンを最大確保する。
+        if disable_thinking or json_mode:
             try:
                 config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
             except Exception:

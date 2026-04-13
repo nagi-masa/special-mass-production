@@ -51,7 +51,7 @@ def generate_cover_assets(candidate: dict, target: str) -> dict:
 """
     raw = call_claude(system_prompt, user_prompt, max_tokens=2000, json_mode=True)
 
-    design = extract_json(raw, {"design_concept": raw, "color_scheme": "", "subject": "", "image_prompt": ""})
+    design = extract_json(raw, {"design_concept": "", "color_scheme": "", "subject": "", "image_prompt": ""})
 
     # タイトル・サブタイトル・バッジはcandidateから流用（AI再生成不要）
     result = {

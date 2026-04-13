@@ -18,7 +18,7 @@ def generate_greeting(candidate: dict, target: str) -> str:
 # ターゲット: {target}
 著者からの温かい挨拶文を800文字程度で書いてください。
 """
-    return call_claude(system_prompt, user_prompt, max_tokens=2500)
+    return call_claude(system_prompt, user_prompt, max_tokens=2500, disable_thinking=True)
 
 
 def generate_intro(candidate: dict, target: str) -> str:
@@ -36,7 +36,7 @@ def generate_intro(candidate: dict, target: str) -> str:
 この特典を読むと何が変わるかを具体的に示すこと。
 絶対に途中で切らず、最後まで書き切ること。
 """
-    return call_claude(system_prompt, user_prompt, max_tokens=4000)
+    return call_claude(system_prompt, user_prompt, max_tokens=4000, disable_thinking=True)
 
 
 def _build_section_prompt(
@@ -94,7 +94,7 @@ def generate_section(
 
     for attempt in range(MAX_RETRIES + 1):
         user_prompt = _build_section_prompt(section, candidate, target, previous_sections, attempt)
-        text = call_claude(system_prompt, user_prompt, max_tokens=5000)
+        text = call_claude(system_prompt, user_prompt, max_tokens=5000, disable_thinking=True)
 
         is_truncated = bool(check_text_truncation(text, section.get("title", "")))
         if len(text) >= MIN_SECTION_CHARS and not is_truncated:
@@ -117,7 +117,7 @@ def generate_conclusion(candidate: dict, target: str, sections: list[str]) -> st
 各章の学びをまとめ、読者を自然に次の行動に促す結びの文章を1000文字程度で書いてください。
 売り込みではなく、読者への応援メッセージとして書いてください。
 """
-    return call_claude(system_prompt, user_prompt, max_tokens=2000)
+    return call_claude(system_prompt, user_prompt, max_tokens=2000, disable_thinking=True)
 
 
 def generate_profile_page(candidate: dict, author_profile: str, target: str) -> str:
@@ -144,7 +144,7 @@ def generate_profile_page(candidate: dict, author_profile: str, target: str) -> 
 - 「です・ます」調
 - 箇条書きではなく、連続した文章で書く
 """
-    return call_claude(system_prompt, user_prompt, max_tokens=2000)
+    return call_claude(system_prompt, user_prompt, max_tokens=2000, disable_thinking=True)
 
 
 def generate_terms(author_name: str = "", report_title: str = "", court: str = "大阪地方裁判所") -> str:

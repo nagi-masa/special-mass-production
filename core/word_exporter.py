@@ -21,7 +21,6 @@ def _insert_visuals(doc: Document, visuals: list[dict]):
     for v in visuals:
         png_path = v.get("path")
         caption = v.get("caption", "")
-        ai_prompt = v.get("ai_prompt", "")
 
         if png_path and Path(png_path).exists():
             # PNG画像を挿入
@@ -36,16 +35,11 @@ def _insert_visuals(doc: Document, visuals: list[dict]):
                 cap_p = doc.add_paragraph(caption)
                 cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         else:
-            # PNG生成できなかった場合：ビジュアル枠だけ置く
-            doc.add_paragraph(f"【図: {v.get('title', '')}】（画像を差し込んでください）")
+            # PNG生成できなかった場合：タイトルのみ枠表示
+            title_label = v.get("title", "")
+            doc.add_paragraph(f"【図解: {title_label}】（画像を差し込んでください）")
             if caption:
                 doc.add_paragraph(caption)
-
-        # AIプロンプトは下部に参考として記載
-        if ai_prompt:
-            note = doc.add_paragraph(f"＜画像AI生成プロンプト＞\n{ai_prompt}")
-            note.runs[0].font.size = Pt(8)
-            note.runs[0].font.color.rgb = RGBColor(0x99, 0x99, 0x99)
 
 
 def _add_footer(doc: Document, copyright_text: str):
