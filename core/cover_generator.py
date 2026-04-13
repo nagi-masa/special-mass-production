@@ -49,7 +49,7 @@ def generate_cover_assets(candidate: dict, target: str) -> dict:
 上記の情報をもとに、このターゲットと特典内容に合った
 表紙デザインコンセプト・配色・AI画像プロンプトを設計してください。
 """
-    raw = call_claude(system_prompt, user_prompt, max_tokens=2000)
+    raw = call_claude(system_prompt, user_prompt, max_tokens=2000, json_mode=True)
 
     design = extract_json(raw, {"design_concept": raw, "color_scheme": "", "subject": "", "image_prompt": ""})
 

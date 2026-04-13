@@ -49,6 +49,6 @@ def generate_candidates(
 解決策: {analysis.get("solutions", [])}
 ティザー要素: {analysis.get("teaser_elements", [])}
 """
-    raw = call_claude(system_prompt, user_prompt, max_tokens=4000)
+    raw = call_claude(system_prompt, user_prompt, max_tokens=4000, json_mode=True)
 
     return extract_json(raw, {"can_multiply": False, "reason": "解析失敗", "candidates": []})

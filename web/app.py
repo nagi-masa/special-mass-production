@@ -213,7 +213,7 @@ def step_analyze():
         st.error("分析結果が取得できませんでした。AIの応答を確認してください。")
         raw = analysis.get("raw_summary", "（応答なし）")
         with st.expander("AIの生応答を確認する（デバッグ用）", expanded=True):
-            st.text(raw[:3000] if raw else "（空）")
+            st.text(raw[:8000] if raw else "（空）")
         if st.button("再分析する", type="primary"):
             st.session_state.analysis = {}
             st.rerun()
