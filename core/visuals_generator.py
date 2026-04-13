@@ -93,7 +93,7 @@ def generate_visual_specs(section: dict, section_text: str, candidate: dict, tar
 """
 
     for attempt in range(2):
-        raw = call_claude(system_prompt, _build_prompt(retry=(attempt > 0)), max_tokens=3000)
+        raw = call_claude(system_prompt, _build_prompt(retry=(attempt > 0)), max_tokens=4000)
 
         result = extract_json(raw, {"visuals": []})
         visuals = result.get("visuals", [])

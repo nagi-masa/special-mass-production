@@ -53,7 +53,7 @@ def generate_toc(
 # 最低セクション数
 {MIN_SECTIONS}
 """
-    raw = call_claude(system_prompt, user_prompt, max_tokens=3000)
+    raw = call_claude(system_prompt, user_prompt, max_tokens=4000)
 
     return extract_json(raw, {"sections": [], "flow_check": "解析失敗"})
 

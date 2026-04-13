@@ -47,7 +47,7 @@ def analyze_materials(
 # 素材テキスト
 {combined}
 """
-    raw = call_claude(system_prompt, user_prompt, max_tokens=3000)
+    raw = call_claude(system_prompt, user_prompt, max_tokens=6000)
 
     fallback = {
         "themes": [], "pain_points": [], "ideal_outcomes": [],
