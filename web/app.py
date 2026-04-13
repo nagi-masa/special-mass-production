@@ -211,9 +211,20 @@ def step_analyze():
     ])
     if all_empty:
         st.error("分析結果が取得できませんでした。AIの応答を確認してください。")
-        raw = analysis.get("raw_summary", "（応答なし）")
+        raw = analysis.get("raw_summary", "（応答なし）") or ""
         with st.expander("AIの生応答を確認する（デバッグ用）", expanded=True):
-            st.text(raw[:8000] if raw else "（空）")
+            total_len = len(raw)
+            ends_ok = raw.rstrip().endswith("}")
+            st.caption(
+                f"応答長: {total_len} 文字 | "
+                f"末尾が '}}' で終わっているか: {'✅ YES' if ends_ok else '❌ NO（JSON途切れの可能性）'}"
+            )
+            # 末尾が途切れている場合は後半を優先して表示
+            if not ends_ok and total_len > 4000:
+                st.text("--- 末尾4000文字 ---")
+                st.text(raw[-4000:])
+            else:
+                st.text(raw[:8000] if raw else "（空）")
         if st.button("再分析する", type="primary"):
             st.session_state.analysis = {}
             st.rerun()

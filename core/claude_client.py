@@ -82,6 +82,30 @@ def _call_openai(system_prompt: str, user_prompt: str, max_tokens: int, json_mod
     return response.choices[0].message.content
 
 
+def _set_thinking_budget_zero(config_kwargs: dict, types_module) -> None:
+    """
+    Gemini の thinking を無効化する。
+    SDK バージョンごとに API が異なるため、複数の方法を順番に試す。
+    """
+    # 方法1: types.ThinkingConfig(thinking_budget=0)
+    try:
+        config_kwargs["thinking_config"] = types_module.ThinkingConfig(thinking_budget=0)
+        return
+    except Exception:
+        pass
+    # 方法2: dict 形式（旧バージョンの SDK）
+    try:
+        config_kwargs["thinking_config"] = {"thinkingBudget": 0}
+        return
+    except Exception:
+        pass
+    # 方法3: include_thoughts=False（代替パラメータ）
+    try:
+        config_kwargs["thinking_config"] = types_module.ThinkingConfig(include_thoughts=False)
+    except Exception:
+        pass  # すべて失敗してもエラーにしない（max_tokens 増量でカバー）
+
+
 # ── Google Gemini ─────────────────────────────────────────
 def _call_gemini(
     system_prompt: str,
@@ -110,10 +134,7 @@ def _call_gemini(
         # max_output_tokens の枠を圧迫する。json_mode または長文生成では
         # thinking を無効化して出力トークンを最大確保する。
         if disable_thinking or json_mode:
-            try:
-                config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-            except Exception:
-                pass  # SDKバージョンが非対応でも続行
+            _set_thinking_budget_zero(config_kwargs, types)
 
         response = client.models.generate_content(
             model=GEMINI_MODEL,
