@@ -201,6 +201,24 @@ def step_analyze():
         })
 
     analysis = st.session_state.analysis
+
+    # 分析結果が空の場合はデバッグ情報を表示
+    all_empty = not any([
+        analysis.get("themes"),
+        analysis.get("pain_points"),
+        analysis.get("ideal_outcomes"),
+        analysis.get("solutions"),
+    ])
+    if all_empty:
+        st.error("分析結果が取得できませんでした。AIの応答を確認してください。")
+        raw = analysis.get("raw_summary", "（応答なし）")
+        with st.expander("AIの生応答を確認する（デバッグ用）", expanded=True):
+            st.text(raw[:3000] if raw else "（空）")
+        if st.button("再分析する", type="primary"):
+            st.session_state.analysis = {}
+            st.rerun()
+        return
+
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("抽出されたテーマ")
